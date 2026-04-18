@@ -1,0 +1,18 @@
+**Typical features**
+
+* Echo often shows **enlarged LV cavity size** with **apical segment(s) bulging outward in systole** (dyskinesia).
+* Global systolic function may be **reduced**, but can vary; apical dyskinesia often indicates **regional scar/remodeling**.
+* May be associated with **secondary (functional) mitral regurgitation** due to LV dilation and leaflet tethering, though this is not always present.
+
+**Common differential diagnoses**
+
+* **Ischemic cardiomyopathy** with apical scar/aneurysmal remodeling
+* **Dilated cardiomyopathy** with regional variation
+* **Prior myocarditis** with residual regional dysfunction
+* **Takotsubo cardiomyopathy** (if acute/subacute context)
+
+**Notes / uncertainty**
+
+* “Dilatation” should be interpreted relative to **body size** and imaging quality; measurements can vary by method.
+* Apical dyskinesia can be misread if the apex is **foreshortened**.
+

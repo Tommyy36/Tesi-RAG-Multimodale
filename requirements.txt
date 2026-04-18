@@ -1,0 +1,34 @@
+# Core
+numpy>=2.0.0
+pandas>=1.5
+
+# DICOM handling
+pydicom>=2.4
+
+# Image processing
+Pillow>=9.5
+
+# Vector database
+chromadb>=0.4.24
+qdrant_client >= 0.11.10
+datapizza-ai >= 0.0.9
+datapizza-ai-parsers-docling >= 0.0.1
+datapizza-ai-vectorstores-qdrant >= 0.0.1
+# Embeddings (local, no API)
+sentence-transformers>=2.2.2
+torch>= 1.0.0
+
+# Utilities
+tqdm>=4.65
+python-dotenv>=1.0
+
+# OPENAI
+openai >= 1.0.0
+
+#Backend
+fastapi >= 0.0.1
+pydantic >= 1.0.0
+streamlit >= 1.0.0
+requests~=2.32.4
+textparser <= 0.24.0
+Docling >= 2.68.0

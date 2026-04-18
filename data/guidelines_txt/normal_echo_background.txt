@@ -1,0 +1,20 @@
+**Typical imaging characteristics**
+
+* Left and right ventricular cavities generally appear proportionate, with preserved global systolic function and coordinated contraction.
+* Regional wall motion is typically uniform, without evident areas of hypokinesia, akinesia, or dyskinesia on standard views.
+* Cardiac chambers (atria and ventricles) usually show normal geometry and balanced relationships to each other.
+* Valvular structures often appear thin and mobile, with no obvious restriction or gross regurgitant jets on qualitative assessment.
+* Pericardial space is typically unremarkable, without visible effusion.
+
+**Common limitations of normal findings**
+
+* Subtle functional abnormalities, early disease, or transient conditions may not be detectable at rest.
+* Mild regional wall motion changes can be missed due to suboptimal acoustic windows or limited image quality.
+* Functional abnormalities that are load-dependent, exercise-induced, or intermittent may not be evident.
+* Echocardiography may not fully characterize myocardial tissue composition or coronary artery pathology.
+
+**Notes and uncertainty**
+
+* A “normal” echocardiographic examination reflects findings within expected patterns at the time of imaging and in the examined conditions.
+* Normal imaging does not exclude all forms of cardiac disease, particularly early, microstructural, or non-hemodynamic pathology.
+* Clinical correlation, follow-up, or complementary imaging may be required depending on symptoms and pre-test probability.

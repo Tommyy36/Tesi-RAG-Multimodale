@@ -1,0 +1,23 @@
+**Typical features**
+
+* Echo shows **marked septal thickening** with **preserved global systolic function** by conventional measures.
+* Important accompanying assessments often include:
+
+  * Presence/absence of **dynamic LV outflow tract (LVOT) obstruction**
+  * **Systolic anterior motion (SAM)** of the mitral valve
+  * **Diastolic dysfunction** and elevated filling pressure indicators
+* Regional function may appear normal, while symptoms can still occur due to obstruction/diastolic issues.
+
+**Common differential diagnoses**
+
+* **Hypertrophic cardiomyopathy** (classic consideration with severe septal hypertrophy)
+* **Long-standing hypertension** with asymmetric remodeling
+* **Aortic stenosis**–related hypertrophy
+* **Storage/infiltrative diseases** (selected contexts)
+
+**Notes / uncertainty**
+
+* “Normal function” (normal EF) can be misleading in severe hypertrophy; clinical impact may relate more to **obstruction and diastolic function** than EF.
+* Definitive characterization often benefits from **CMR** (fibrosis/scar patterns) and clinical correlation.
+
+If you want, I can also reformat each item into a stricter template (e.g., 3–5 bullet “echo pattern” + 2–4 bullet “clinical associations” per label) to make it more retrieval-friendly.

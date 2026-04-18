@@ -1,0 +1,21 @@
+**Typical features**
+
+* Echo shows **reduced LV systolic function** plus **apical akinesia** (near-absent systolic thickening/motion).
+* A **discrete echogenic apical mass** may be seen, often layered against the endocardium, consistent with **apical thrombus**.
+* **Low apical flow / spontaneous echo contrast** may be present, supporting blood stasis.
+* Contrast echo may improve visualization when the apex is poorly defined.
+
+**Common differential diagnoses**
+
+* **Ischemic cardiomyopathy / prior anterior MI** (classic association)
+* **Takotsubo cardiomyopathy** (can be complicated by thrombus in some cases)
+* **Apical aneurysm** (thrombus within aneurysmal segment)
+* **LV noncompaction / prominent trabeculation** (may mimic thrombus)
+* **Apical tumor or vegetation** (less common; considered when appearance/attachment is atypical)
+
+**Notes / uncertainty**
+
+* Standard echo can **miss or misclassify** apical thrombus; **contrast echo or cardiac MRI** is often used when doubt remains.
+* Thrombus likelihood rises with **apical akinesia and low-flow states**, but exact risk varies.
+
+

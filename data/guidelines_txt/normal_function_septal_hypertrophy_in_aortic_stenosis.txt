@@ -1,0 +1,17 @@
+**Typical features**
+
+* Echo often shows **septal (and often concentric) hypertrophy** as an adaptive response to pressure overload.
+* LV systolic function can remain **preserved** for a long time; diastolic dysfunction may be present even with normal EF.
+* Evaluation commonly focuses on **aortic valve morphology and hemodynamic severity** (without assuming specific thresholds here).
+
+**Common differential diagnoses**
+
+* **Hypertensive heart disease**
+* **Hypertrophic cardiomyopathy** (especially if hypertrophy is disproportionate)
+* **Athlete’s heart** (if clinical context fits)
+
+**Notes / uncertainty**
+
+* Apparent “normal function” may mask **subclinical systolic impairment** detectable by strain imaging.
+* Severity of hypertrophy and function depend on duration and severity of afterload and comorbidities.
+

@@ -1,0 +1,19 @@
+**Typical imaging features**
+
+* Regional wall motion abnormality involving the **inferoapical portion of the interventricular septum**, characterized by **reduced or absent systolic thickening and inward motion**.
+* Best appreciated on standard apical views (e.g., apical four- and two-chamber), where the affected segment appears **hypokinetic to akinetic** relative to adjacent myocardium.
+* The abnormality may be **segmentally confined**, with preserved motion in neighboring septal or apical segments, or may coexist with other regional abnormalities.
+* Global left ventricular function may be **preserved or reduced**, depending on the extent and context of involvement.
+
+**Possible clinical associations**
+
+* May be associated with **ischemic patterns**, particularly involving territories supplying the inferior or apical septal myocardium.
+* Can be seen in **non-ischemic conditions**, including prior myocardial injury, cardiomyopathic processes, or transient dysfunction.
+* Occasionally observed in the setting of **conduction abnormalities** or altered ventricular activation, which can affect apparent septal motion.
+
+**Notes and uncertainty**
+
+* Echocardiographic appearance alone is **not specific for etiology** and should be interpreted cautiously.
+* Image quality, loading conditions, and technical factors may influence assessment of septal motion.
+* **Clinical correlation** (symptoms, ECG, biomarkers, and/or additional imaging) is required to clarify significance and underlying cause.
+* The finding may be **chronic or transient**, and comparison with prior studies can be helpful when available.

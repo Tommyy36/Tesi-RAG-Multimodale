@@ -1,0 +1,20 @@
+**Typical features**
+
+* Echo often shows a **localized outpouching** involving the **LV apex** with extension toward the **inferior and/or septal apical segments**.
+* Segment(s) in the aneurysmal region often appear **thin and scar-like**, with **paradoxical systolic expansion (dyskinesia)** or severely reduced thickening.
+* May be accompanied by **regional LV systolic dysfunction**; overall LV function may be preserved or reduced depending on extent.
+* May be associated with **apical thrombus** and **systemic embolic risk**, especially when flow is sluggish.
+
+**Common differential diagnoses**
+
+* **Post–myocardial infarction scar/true aneurysm**
+* **Takotsubo cardiomyopathy** (can mimic apical abnormalities, usually more transient)
+* **Apical hypertrophic cardiomyopathy** (sometimes with aneurysm formation)
+* **Chagas cardiomyopathy** (context-dependent)
+* **LV pseudoaneurysm** (important alternative when wall discontinuity/contained rupture is suspected)
+
+**Notes / uncertainty**
+
+* Distinguishing **true aneurysm vs pseudoaneurysm** may require additional imaging (e.g., contrast echo, CT, or MRI).
+* Apparent “aneurysm” can be exaggerated by **foreshortened apical views** or heavy trabeculation.
+

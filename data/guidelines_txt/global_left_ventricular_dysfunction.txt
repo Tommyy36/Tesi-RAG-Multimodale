@@ -1,0 +1,20 @@
+**Typical features**
+
+* Echo typically shows **diffuse reduction of LV systolic performance** (global hypokinesia), often with reduced contractility across multiple segments.
+* LV cavity may be **normal-sized or dilated**, depending on acuity and chronicity.
+* May have supportive findings such as **left atrial enlargement** or **diastolic dysfunction patterns**, though these are variable.
+
+**Common differential diagnoses**
+
+* **Dilated cardiomyopathy** (idiopathic/genetic/toxic)
+* **Ischemic cardiomyopathy** (multivessel or diffuse scar)
+* **Myocarditis / inflammatory cardiomyopathy**
+* **Tachycardia-induced cardiomyopathy**
+* **Infiltrative or metabolic cardiomyopathies** (context-dependent)
+
+**Notes / uncertainty**
+
+* “Global dysfunction” is a **functional description**, not a diagnosis; etiology often requires clinical context and additional testing.
+* Some conditions show **load-dependence** (e.g., blood pressure, volume status) that can change apparent function.
+
+

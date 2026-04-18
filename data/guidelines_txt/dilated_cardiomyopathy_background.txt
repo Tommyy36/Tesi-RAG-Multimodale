@@ -1,0 +1,25 @@
+**Typical features**
+
+* Dilated left ventricle with **global systolic dysfunction** on echocardiography
+* Reduced contractility involving most or all segments rather than a focal pattern
+* Possible dilation of other chambers (left atrium, sometimes right ventricle)
+* Functional (secondary) mitral and/or tricuspid regurgitation due to annular dilation
+* Decreased stroke volume and cardiac output; low-flow state may be present
+* Clinically often associated with symptoms of heart failure (exertional dyspnea, fatigue, fluid retention), though presentation can vary
+* May show signs of elevated filling pressures on Doppler parameters, without a single defining marker
+
+**Common differential diagnoses**
+
+* Ischemic cardiomyopathy (especially with multivessel disease causing diffuse dysfunction)
+* Hypertensive heart disease in a late, decompensated phase
+* Valvular cardiomyopathy from chronic severe regurgitation
+* Myocarditis (acute or chronic inflammatory patterns)
+* Tachycardia-induced cardiomyopathy
+* Infiltrative or metabolic cardiomyopathies (less typical but considered if features are atypical)
+
+**Notes / uncertainty**
+
+* Findings are **non-specific** and require integration with clinical history, ECG, and laboratory data
+* Echocardiography defines functional patterns but **does not determine etiology**
+* Overlap with other cardiomyopathies is common; additional imaging (e.g. CMR) or follow-up may be needed
+* Severity and reversibility can vary depending on underlying cause and disease stage
