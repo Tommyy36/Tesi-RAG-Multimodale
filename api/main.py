@@ -54,6 +54,21 @@ class ChatResponse(BaseModel):
 #     )
 #     return ChatResponse(**out)
 
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    """
+    POST /chat
+    Accetta una richiesta clinica, esegue il RAG e interroga Gemini.
+    """
+    out = answer_question(
+        question=req.question,
+        model=req.model,
+        rag_type=req.rag_type,
+        session_id=req.session_id,
+        evaluate=req.evaluate,
+    )
+    return ChatResponse(**out)
+
 
 @app.post("/upload-doc")
 async def upload_doc(

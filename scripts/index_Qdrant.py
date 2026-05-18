@@ -1,313 +1,239 @@
 """
-Vectorstore Manager - Singleton con pipeline datapizza per Qdrant in-memory.
+Vectorstore Manager Evoluto - Integrazione Google Gemini API per Tesi Multimodale.
+Versione ULTRA COMPATIBILE - Basata sul codice funzionante dell'altra IA.
 """
+import sys
 import os
 import json
 import glob
 import uuid
-from typing import Optional
-from datapizza.core.vectorstore import VectorConfig
-from datapizza.vectorstores.qdrant import QdrantVectorstore
-from datapizza.type.type import Chunk, DenseEmbedding
-from sentence_transformers import SentenceTransformer
+from google import genai
+from typing import Optional, List
+from dotenv import load_dotenv
+
+# Import del client ufficiale di Qdrant standard
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
+
+# Carica variabili d'ambiente (.env)
+load_dotenv()
+
+# Configurazione Google Gemini identica a quella funzionante
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # --- PATHS ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
-DATASET_DIR = os.path.join(DATA_DIR, "dataset_built")
 GUIDELINES_DIR = os.path.join(DATA_DIR, "guidelines_txt")
-JSONL_PATH = os.path.join(DATASET_DIR, "documents.jsonl")
+JSONL_PATH = os.path.join(DATA_DIR, "dataset_built", "documents.jsonl") 
 
-EMB_MODEL = "all-MiniLM-L6-v2"
-EMBEDDING_DIM = 384
+# Path dei file temporanei delle TAC e Unity generati oggi
+TAC_ROWS_PATH = os.path.join(DATA_DIR, "dataset_built", "tac_rows.json")
+UNITY_ROWS_PATH = os.path.join(DATA_DIR, "dataset_built", "unity_rows.json")
+
+# --- CONFIGURAZIONE GOOGLE EMBEDDING ---
+# Ripristinato il modello esatto che funzionava e non dava 404
+EMB_MODEL_NAME = "gemini-embedding-001"
+EMBEDDING_DIM = 3072  
+
+# I tuoi 4 ECG originali stabili
+ECG_CASES = [
+    {"id": "ecg_normal_01", "image_path": "data/raw_data/ECG_Dataset/SELECTED_SAMPLES/Normal/Normal(1).jpg", "modality": "ECG", "label": "Normal Person", "description": "Tracciato elettrocardiografico (ECG) di un paziente sano. Ritmo sinusale normale, assenza di anomalie del tratto ST o dell'onda T. Parametri elettrici cardiaci nella norma."},
+    {"id": "ecg_abnormal_01", "image_path": "data/raw_data/ECG_Dataset/SELECTED_SAMPLES/Normal/Normal(1).jpg", "modality": "ECG", "label": "Abnormal Heartbeat", "description": "Tracciato elettrocardiografico (ECG) che mostra anomalie del ritmo cardiaco. Presenza di battiti ectopici o irregolarità della conduzione elettrica, indicativi di aritmia da approfondire clinicamente."},
+    {"id": "ecg_infarction_01", "image_path": "data/raw_data/ECG_Dataset/SELECTED_SAMPLES/Infarction/PMI(1).jpg", "modality": "ECG", "label": "History of MI", "description": "Tracciato elettrocardiografico (ECG) di un paziente con storia pregressa di infarto miocardico. Presenza di onde Q patologiche stabili, segno di una cicatrice miocardica da vecchio evento ischemico."},
+    {"id": "ecg_mi_01", "image_path": "data/raw_data/ECG_Dataset/SELECTED_SAMPLES/MI/MI(1).jpg", "modality": "ECG", "label": "Myocardial Infarction", "description": "Tracciato elettrocardiografico (ECG) con evidenti segni di Infarto Miocardico Acuto in corso. Marcato sopralivellamento del tratto ST, indicativo di occlusione coronarica acuta."}
+]
 
 # -----------------------------
 # Singleton Vectorstore
 # -----------------------------
-_vectorstore: Optional[QdrantVectorstore] = None
-_embedder: Optional[SentenceTransformer] = None
+_vectorstore: Optional[QdrantClient] = None
 _initialized = False
 
-
-class LocalEmbedder:
-    """Adapter per SentenceTransformer -> embeddings."""
-    def __init__(self, model: SentenceTransformer):
-        self.model = model
+def get_gemini_embeddings_batch(texts: List[str]) -> List[List[float]]:
+    """Genera embeddings usando la sintassi esatta dell'altra IA."""
+    print(f"[GeminiAPI] Generazione embedding per {len(texts)} documenti...")
     
-    def embed(self, texts: list[str]) -> list[list[float]]:
-        return self.model.encode(texts, normalize_embeddings=True).tolist()
+    embeddings = []
+    for text in texts:
+        response = client.models.embed_content(
+            model=EMB_MODEL_NAME,
+            contents=text
+        )
+        embeddings.append(response.embeddings[0].values)
+        
+    return embeddings
 
-
-def get_vectorstore() -> QdrantVectorstore:
-    """Ritorna il vectorstore singleton, inizializzandolo se necessario."""
-    global _vectorstore, _embedder, _initialized
+def get_vectorstore() -> QdrantClient:
+    """Ritorna il vectorstore singleton (Qdrant in-memory)."""
+    global _vectorstore, _initialized
     
     if _vectorstore is None:
-        print("[IndexQdrant] Initializing Qdrant in-memory...")
-        _vectorstore = QdrantVectorstore(location=":memory:")
-        _embedder = SentenceTransformer(EMB_MODEL)
+        print("[IndexQdrant] Inizializzazione Qdrant ufficiale in modalità IN-MEMORY...")
+        _vectorstore = QdrantClient(location=":memory:")
     
     if not _initialized:
-        print("[IndexQdrant] Auto-indexing collections...")
+        print("[IndexQdrant] Auto-indicizzazione delle collezioni multimodali...")
         _ensure_collections_populated()
         _initialized = True
     
     return _vectorstore
 
-
-def get_embedder() -> SentenceTransformer:
-    """Ritorna il sentence transformer singleton."""
-    global _embedder
-    if _embedder is None:
-        _embedder = SentenceTransformer(EMB_MODEL)
-    return _embedder
-
-
 def _ensure_collections_populated():
-    """Controlla e popola le collection 'cases' e 'guidelines' se vuote."""
-    global _vectorstore, _embedder
-    
-    # Collection 'cases'
-    try:
-        collections = _vectorstore.get_collections()
-        collection_names = [c[0] if isinstance(c, tuple) else c for c in collections]
-        if "cases" in collection_names:
-            print("[IndexQdrant] Collection 'cases' exists, checking if populated...")
-            try:
-                test = _vectorstore.search(
-                    collection_name="cases",
-                    query_vector=[0.0] * EMBEDDING_DIM,
-                    vector_name="text_embedding",
-                    k=1
-                )
-                if test:
-                    print(f"[IndexQdrant] Collection 'cases' already has data.")
-                    return
-            except:
-                pass
-    except:
-        pass
-    
-    print("[IndexQdrant] Creating and indexing collections...")
+    """Controlla e popola le collection 'cases' e 'guidelines'."""
+    global _vectorstore
+    print(f"[IndexQdrant] Creazione e indicizzazione con dimensioni Gemini ({EMBEDDING_DIM})...")
     _create_and_index_all()
 
-
 def _create_and_index_all():
-    """Crea e indicizza tutte le collection."""
-    global _vectorstore, _embedder
+    """Configura le collezioni Qdrant con le nuove specifiche di tesi."""
+    global _vectorstore
     
-    # Crea collection 'cases'
-    vector_config = [VectorConfig(name="text_embedding", dimensions=EMBEDDING_DIM)]
+    for collection in ["cases", "guidelines"]:
+        try:
+            _vectorstore.delete_collection(collection)
+        except:
+            pass
+        _vectorstore.create_collection(
+            collection_name=collection,
+            vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE)
+        )
     
-    try:
-        _vectorstore.delete_collection("cases")
-    except:
-        pass
-    
-    _vectorstore.create_collection("cases", vector_config=vector_config)
-    
-    # Indicizza cases e frames
+    _pre_build_documents_jsonl()  # Esegue il merge dei file
     _index_cases()
-    
-    # Crea collection 'guidelines'
-    try:
-        _vectorstore.delete_collection("guidelines")
-    except:
-        pass
-    
-    _vectorstore.create_collection("guidelines", vector_config=vector_config)
     _index_guidelines()
 
+def _pre_build_documents_jsonl():
+    """Costruisce il file unico documents.jsonl unendo ECG, TAC e Unity."""
+    print("--- GENERAZIONE DATASET MULTIMODALE DEFINITIVO (documents.jsonl) ---")
+    final_docs = []
+    
+    # 1. ECG
+    final_docs.extend(ECG_CASES)
+    
+    # 2. TAC
+    if os.path.exists(TAC_ROWS_PATH):
+        with open(TAC_ROWS_PATH, "r", encoding="utf-8") as f:
+            final_docs.extend(json.load(f))
+            
+    # 3. Campionamento Unity (primi 6 casi)
+    if os.path.exists(UNITY_ROWS_PATH):
+        with open(UNITY_ROWS_PATH, "r", encoding="utf-8") as f:
+            unity_all = json.load(f)
+            final_docs.extend(unity_all[:6])
+            
+    # Scrittura fisica
+    os.makedirs(os.path.dirname(JSONL_PATH), exist_ok=True)
+    with open(JSONL_PATH, "w", encoding="utf-8") as out_f:
+        for doc in final_docs:
+            out_f.write(json.dumps(doc, ensure_ascii=False) + "\n")
+            
+    print(f"[Dataset] Merge completato. {len(final_docs)} casi totali scritti in documents.jsonl")
 
 def _index_cases():
-    """Indicizza cases e frames da documents.jsonl."""
-    global _vectorstore, _embedder
-    
+    """Indicizza i casi clinici multimodali."""
     if not os.path.exists(JSONL_PATH):
-        print(f"[IndexQdrant] WARNING: {JSONL_PATH} not found. Skipping cases indexing.")
+        print(f"[IndexQdrant] ERROR: {JSONL_PATH} non trovato.")
         return
     
-    print(f"[IndexQdrant] Loading documents from {JSONL_PATH}...")
-    
-    # Carica tutti i documenti (case_card + frame)
     docs_text = []
     docs_metadata = []
     
     with open(JSONL_PATH, "r", encoding="utf-8") as f:
         for line in f:
+            if not line.strip(): continue
             obj = json.loads(line)
-            doc_type = obj["metadata"].get("document_type")
-            # Indicizza sia case_card che frame
-            if doc_type not in ["case_card", "frame"]:
-                continue
-            docs_text.append(obj["content"])
-            docs_metadata.append(obj["metadata"])
+            
+            docs_text.append(obj["description"])
+            docs_metadata.append({
+                "case_id": obj["id"],
+                "image_path": obj["image_path"],
+                "modality": obj["modality"],
+                "label": obj["label"],
+                "view": obj.get("view", "N/A")
+            })
     
-    if not docs_text:
-        print("[IndexQdrant] No documents found.")
+    if not docs_text: 
+        print("[IndexQdrant] Nessun documento trovato nel file JSONL.")
         return
+
+    embeddings = get_gemini_embeddings_batch(docs_text)
     
-    print(f"[IndexQdrant] Embedding {len(docs_text)} documents...")
-    
-    # Genera embeddings usando LocalEmbedder
-    local_embedder = LocalEmbedder(_embedder)
-    embeddings = local_embedder.embed(docs_text)
-    
-    # Aggiungi a Qdrant
-    print(f"[IndexQdrant] Adding documents to Qdrant...")
-    chunks = []
+    points = []
     for i in range(len(docs_text)):
-        case_id = docs_metadata[i].get("case_id", f"unknown_{i}")
+        case_id = docs_metadata[i].get("case_id", f"gen_{i}")
         doc_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"case_{case_id}_{i}"))
-        emb = DenseEmbedding(name="text_embedding", vector=embeddings[i])
         
-        metadata = docs_metadata[i].copy()
-        metadata["original_id"] = case_id
-        
-        chunks.append(
-            Chunk(
+        points.append(
+            PointStruct(
                 id=doc_uuid,
-                text=docs_text[i],
-                embeddings=[emb],
-                metadata=metadata
+                vector=embeddings[i],
+                payload={
+                    "text": docs_text[i],
+                    **docs_metadata[i]
+                }
             )
         )
     
-    _vectorstore.add(chunk=chunks, collection_name="cases")
-    
-    # Conta i tipi di documenti indicizzati
-    doc_types = {}
-    for m in docs_metadata:
-        dt = m.get("document_type", "unknown")
-        doc_types[dt] = doc_types.get(dt, 0) + 1
-    
-    types_str = ", ".join([f"{v} {k}s" for k, v in doc_types.items()])
-    print(f"[IndexQdrant] ✓ Indexed {len(docs_text)} documents ({types_str}).")
-
+    _vectorstore.upsert(collection_name="cases", points=points)
+    print(f"[IndexQdrant] ✓ Successo! Indicizzati {len(docs_text)} esami multimodali nel database.")
 
 def _index_guidelines():
-    """Indicizza guidelines da file .txt."""
-    global _vectorstore, _embedder
-    
+    """Indicizza linee guida mediche (TXT) se presenti."""
     if not os.path.isdir(GUIDELINES_DIR):
-        print(f"[IndexQdrant] WARNING: {GUIDELINES_DIR} not found. Skipping guidelines indexing.")
+        print("[IndexQdrant] Nessuna linea guida TXT trovata, salto la sezione.")
         return
-    
-    print(f"[IndexQdrant] Loading guidelines from {GUIDELINES_DIR}...")
-    
-    def chunk_text(text: str, chunk_size: int = 800, overlap: int = 150):
-        chunks = []
-        start = 0
-        while start < len(text):
-            end = start + chunk_size
-            chunks.append(text[start:end])
-            start = end - overlap
-        return chunks
     
     docs_text = []
     docs_metadata = []
-    idx = 0
     
     for path in glob.glob(os.path.join(GUIDELINES_DIR, "*.txt")):
-        fname = os.path.basename(path)
         with open(path, "r", encoding="utf-8") as f:
             text = f.read().strip()
         
-        if not text:
-            continue
-        
-        chunks = chunk_text(text)
+        chunks = [text[i:i+1000] for i in range(0, len(text), 800)]
         for j, chunk in enumerate(chunks):
             docs_text.append(chunk)
-            docs_metadata.append({
-                "source": fname,
-                "chunk_id": j,
-                "document_type": "guideline",
-                "original_id": f"guideline_{idx}"
-            })
-            idx += 1
+            docs_metadata.append({"source": os.path.basename(path), "document_type": "guideline"})
     
-    if not docs_text:
-        print("[IndexQdrant] No guidelines found.")
-        return
+    if not docs_text: return
     
-    print(f"[IndexQdrant] Embedding {len(docs_text)} guideline chunks...")
+    embeddings = get_gemini_embeddings_batch(docs_text)
     
-    # Genera embeddings
-    local_embedder = LocalEmbedder(_embedder)
-    embeddings = local_embedder.embed(docs_text)
-    
-    # Aggiungi a Qdrant
-    print(f"[IndexQdrant] Adding guidelines to Qdrant...")
-    chunks = []
+    points_guidelines = []
     for i in range(len(docs_text)):
-        doc_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"guideline_{i}"))
-        emb = DenseEmbedding(name="text_embedding", vector=embeddings[i])
-        chunks.append(
-            Chunk(
+        doc_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"guide_{i}"))
+        
+        points_guidelines.append(
+            PointStruct(
                 id=doc_uuid,
-                text=docs_text[i],
-                embeddings=[emb],
-                metadata=docs_metadata[i]
+                vector=embeddings[i],
+                payload={
+                    "text": docs_text[i],
+                    **docs_metadata[i]
+                }
             )
         )
     
-    _vectorstore.add(chunk=chunks, collection_name="guidelines")
-    print(f"[IndexQdrant] ✓ Indexed {len(docs_text)} guideline chunks from {len(set(m['source'] for m in docs_metadata))} files.")
-
+    _vectorstore.upsert(collection_name="guidelines", points=points_guidelines)
+    print(f"[IndexQdrant] ✓ Indicizzate {len(docs_text)} sezioni di linee guida.")
 
 def reset_collections():
-    """Elimina e ricrea tutte le collection (per testing/soft reset)."""
-    global _vectorstore, _initialized
-    
+    """
+    Funzione esposta per il backend FastAPI.
+    Svuota e reinizializza le collezioni Qdrant per il soft reset.
+    """
+    global _vectorstore
+    print("[IndexQdrant] Richiesta di reset completo ricevuta da FastAPI...")
+    # Se il client non è inizializzato, lo recuperiamo
     if _vectorstore is None:
-        return
-    
-    print("[IndexQdrant] Resetting all collections...")
-    
-    try:
-        _vectorstore.delete_collection("cases")
-    except:
-        pass
-    
-    try:
-        _vectorstore.delete_collection("guidelines")
-    except:
-        pass
-    
-    _initialized = False
-    _ensure_collections_populated()
-    
-    print("[IndexQdrant] ✓ Collections reset complete.")
+        from qdrant_client import QdrantClient
+        _vectorstore = QdrantClient(location=":memory:")
+        
+    # Chiamiamo la funzione interna che cancella e ricrea tutto da zero
+    _create_and_index_all()
+    print("[IndexQdrant] ✓ Reset completato con successo.")
 
-
-# -----------------------------
-# CLI per test manuale
-# -----------------------------
 if __name__ == "__main__":
-    print("=== Index Qdrant - Pipeline Test ===")
-    print(f"JSONL_PATH: {JSONL_PATH}")
-    
     vs = get_vectorstore()
-    print("\n✓ Vectorstore ready and populated!")
-    
-    # Test search
-    emb = get_embedder()
-    test_query = "dilated cardiomyopathy with reduced ejection fraction"
-    test_emb = emb.encode([test_query], normalize_embeddings=True).tolist()[0]
-    
-    print(f"\nTest search: '{test_query}'")
-    results = vs.search(
-        collection_name="cases",
-        query_vector=test_emb,
-        vector_name="text_embedding",
-        k=3
-    )
-    
-    print(f"Found {len(results)} results:")
-    for i, hit in enumerate(results, 1):
-        case_id = hit.metadata.get("original_id", hit.id)
-        label = hit.metadata.get("diagnosis_label_pretty", "Unknown")
-        doc_type = hit.metadata.get("document_type", "unknown")
-        print(f"  {i}. {case_id} ({doc_type}) - {label}")
-        print(f"     {hit.text[:100]}...")
+    print("\n[SUCCESS] Pipeline di indicizzazione Gemini completata con i dati.")

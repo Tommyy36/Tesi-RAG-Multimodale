@@ -70,6 +70,8 @@ make docker-down
 4. **FastAPI Backend**: REST API per chat, upload DICOM, gestione documenti
 
 ## Comandi Utili
+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
+git remote set-url origin https://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@github.com/Tommyy36/Tesi-RAG-Multimodale.git
 
 ```bash
 # Rigenerare dataset (se aggiungi DICOM in data/raw_data/)

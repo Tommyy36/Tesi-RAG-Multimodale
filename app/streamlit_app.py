@@ -1,150 +1,207 @@
+"""
+Interfaccia Grafica Streamlit Evoluta - Tesi Thomas
+Dashboard di Controllo e Ricerca Cross-Modale (ECG, TAC, Unity, Linee Guida)
+"""
 import os
 import requests
 import streamlit as st
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 backend_host = os.getenv("BACKEND_HOST", "localhost")
 BASE_URL = f"http://{backend_host}:8000"
 
-st.set_page_config(page_title="Multimodal RAG", layout="wide")
+# Configurazione della pagina in modalità Wide (schermo intero)
+st.set_page_config(page_title="RAG Multimodale - Tesi Thomas", layout="wide")
 
-rag_type = "hybrid"  # Default RAG type
-
-if "session_id" not in st.session_state:
-    st.session_state.session_id = None
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-st.title("Multimodal RAG (DICOM)")
-
-# Tab principale
-tab1, tab2, tab3 = st.tabs(["🔬 Analyze Case", "📤 Upload DICOM", "📋 Manage Files"])
-
-with tab1:
-    st.header("Analyze Echocardiography Case")
-    st.info("Upload a DICOM file with optional clinical report for multimodal RAG analysis.")
+# Sidebar di navigazione
+with st.sidebar:
+    st.image("https://img.icons8.com/fluent/100/000000/cardiovascular.png", width=70)
+    st.title("Framework Core")
+    st.subheader("Tesi Thomas")
+    st.markdown("---")
     
-    dicom_analyze = st.file_uploader("Upload DICOM file", type=["dcm"], key="analyze_dicom")
-    report_text = st.text_area(
-        "Clinical Report (optional)", 
-        placeholder="Enter clinical report or leave empty for generic analysis...",
-        height=150
+    scelta_pagina = st.radio(
+        "Seleziona la Dashboard:",
+        ["🔍 Retrieval Cross-Modale", "🔬 Analisi Caso DICOM (Giorgio)", "📋 Gestione Database"]
     )
+    st.markdown("---")
+    st.caption("Backend Core: FastAPI (Port 8000)")
+    st.caption("Vectorstore: Qdrant (In-Memory)")
+    st.caption("Embedding Engine: Gemini v1")
+
+# =====================================================================
+# PAGINA 1: IL TUO MOTORE DI RICERCA CROSS-MODALE (OTTIMIZZATO)
+# =====================================================================
+if scelta_pagina == "🔍 Retrieval Cross-Modale":
+    st.title("🩺 Dashboard di Consultazione Medica Cross-Modale")
+    st.subheader("Allineamento Semantico nello Spazio Vettoriale di Segnali Elettrici, Radiologici e Simulazioni 3D")
+    st.info(
+        "Questa sezione dimostra la novità della tesi: interrogare un database unico in linguaggio naturale "
+        "per recuperare istantaneamente ECG, TAC (estratte da DICOM) o simulazioni di Keypoints da Unity."
+    )
+    st.divider()
+
+    # Input di ricerca principale
+    query_medico = st.text_input(
+        "✍️ Digita i sintomi, il sospetto diagnostico o il piano ecografico da cercare:",
+        placeholder="Es: Paziente con forte dolore al petto, sospetto infarto acuto in corso..."
+    )
+
+    # Griglia di configurazione filtri
+    col_filtri, col_num = st.columns([3, 1])
+    with col_filtri:
+        modalita = st.multiselect(
+            "Filtra sorgenti diagnostiche:",
+            options=["ECG", "CT", "Unity_Simulation"],
+            default=["ECG", "CT", "Unity_Simulation"]
+        )
+    with col_num:
+        top_k = st.slider("Numero max risultati:", min_value=1, max_value=5, value=2)
+
+    if query_medico.strip():
+        with st.spinner("Invio richiesta al server FastAPI e generazione analisi..."):
+            payload_richiesta = {
+                "question": query_medico,
+                "model": "gemini",
+                "rag_type": "hybrid",
+                "evaluate": False
+            }
+            
+            try:
+                # Bussiamo alla porta del backend
+                r = requests.post(f"{BASE_URL}/chat", json=payload_richiesta, timeout=60)
+                
+                if r.status_code == 200:
+                    data = r.json()
+                    risposta_clinica = data.get("answer", "")
+                    sources = data.get("sources", [])
+                    
+                    # 1. Mostriamo subito l'analisi strutturata generata da Gemini
+                    st.subheader("📊 Analisi Clinica Generata")
+                    st.markdown(risposta_clinica)
+                    st.divider()
+                    
+                    # 2. Mostriamo i documenti e le immagini recuperate dal database vettoriale
+                    st.subheader("📁 Reperti Estratti dallo Spazio Vettoriale")
+                    tab_esami, tab_guide = st.tabs(["🖼️ Esami Diagnostici", "📚 Letteratura Scientifica"])
+                    
+                    with tab_esami:
+                        # Filtriamo i casi clinici (cases)
+                        casi = [s for s in sources if s.get("type") == "cases" and s.get("metadata", {}).get("modality") in modalita][:top_k]
+                        if casi:
+                            for i, source in enumerate(casi):
+                                p = source.get("metadata", {})
+                                score = source.get("score", 0.0)
+                                
+                                with st.container(border=True):
+                                    col_txt, col_view = st.columns([3, 2])
+                                    with col_txt:
+                                        st.markdown(f"### Match #{i+1} - {p.get('label')}")
+                                        st.markdown(f"**Affinità Vettoriale:** `{score:.4f}`")
+                                        st.write(f"**Modalità:** {p.get('modality')} | **ID:** `{p.get('case_id')}`")
+                                        st.info(f"**Descrizione Diagnostica:** {p.get('text')}")
+                                    
+                                    with col_view:
+                                        img_p = p.get("image_path")
+                                        if img_p:
+                                            # 1. Trova dinamicamente la root del progetto
+                                            ROOT_DIR = Path(__file__).resolve().parent.parent
+                                            percorso_immagine = ROOT_DIR / img_p
+                                            
+                                            # 2. Fallback universale (Thomas Fix ricorsivo per MI/Infarction invertiti)
+                                            if not percorso_immagine.exists():
+                                                nome_file = Path(img_p).name
+                                                base_data_dir = ROOT_DIR / "data"
+                                                match_trovati = list(base_data_dir.rglob(nome_file))
+                                                if match_trovati:
+                                                    percorso_immagine = match_trovati[0]
+                                            
+                                            # 3. Visualizzazione finale
+                                            if percorso_immagine.exists():
+                                                st.image(str(percorso_immagine), caption=f"Reperto {p.get('modality')}", use_container_width=True)
+                                            else:
+                                                st.warning("⚠️ Immagine non trovata nelle cartelle locali.")
+                                                st.caption(f"Mancante: `{Path(img_p).name}`")
+                                        else:
+                                            st.warning("Path immagine non definito nel payload vettoriale.")
+                        else:
+                            st.info("Nessun esame corrispondente trovato per questa query.")
+                                        
+                    with tab_guide:
+                        # Filtriamo le linee guida (guidelines)
+                        guide = [s for s in sources if s.get("type") == "guidelines"][:top_k]
+                        if guide:
+                            for j, source in enumerate(guide):
+                                p = source.get("metadata", {})
+                                score = source.get("score", 0.0)
+                                with st.expander(f"📖 Estratto Linea Guida #{j+1} (Score: {score:.4f}) - Fonte: {p.get('source')}"):
+                                    st.markdown(p.get("text"))
+                        else:
+                            st.info("Nessuna linea guida rilevante estratta.")
+                else:
+                    st.error(f"❌ Il server backend ha risposto con un errore: {r.text}")
+            except Exception as e:
+                st.error(f"❌ Impossibile comunicare con il backend FastAPI: {e}")
+
+# =====================================================================
+# PAGINA 2: L'INTERFACCIA ORIGINALE DI GIORGIO (PRESERVATA PER LA TESI)
+# =====================================================================
+elif scelta_pagina == "🔬 Analisi Caso DICOM (Giorgio)":
+    st.title("🔬 Analisi Monomodale Ecocardiografica")
+    st.subheader("Infrastruttura di lettura ed estrazione frame da file DICOM")
+    st.divider()
     
-    if st.button("🔍 Analyze Case", type="primary") and dicom_analyze is not None:
-        with st.spinner("Analyzing case..."):
+    st.info("Carica un file DICOM (.dcm) singolo per effettuarne l'analisi visiva tramite i servizi FastAPI.")
+    dicom_analyze = st.file_uploader("Seleziona il file DICOM", type=["dcm"], key="analyze_dicom")
+    report_text = st.text_area("Note Cliniche opzionali", placeholder="Inserisci note...", height=100)
+    
+    if st.button("🔍 Avvia Analisi Pipeline", type="primary") and dicom_analyze is not None:
+        with st.spinner("Elaborazione del file in corso..."):
             files = {"file": (dicom_analyze.name, dicom_analyze.getvalue(), "application/dicom")}
             data = {"report_text": report_text} if report_text.strip() else {}
-            
             try:
                 r = requests.post(f"{BASE_URL}/analyze-case", files=files, data=data, timeout=300)
                 if r.status_code == 200:
                     result = r.json()
-                    st.success("✅ Analysis complete!")
-                    
-                    # Show file info
-                    with st.expander("📁 File Info"):
-                        st.json({
-                            "filename": result.get("filename"),
-                            "frames_extracted": result.get("num_frames"),
-                            "frames_dir": result.get("frames_dir")
-                        })
-                    
-                    # Show analysis result
-                    analysis = result.get("analysis", {})
-                    if analysis:
-                        st.subheader("📊 Clinical Analysis")
-                        st.markdown(analysis.get("answer", "No answer generated"))
-                        
-                        # Show sources
-                        sources = analysis.get("sources", [])
-                        if sources:
-                            with st.expander(f"🔗 Sources ({len(sources)})"):
-                                st.json(sources)
-                        
-                        # Show evaluation if present
-                        evaluation = analysis.get("evaluation")
-                        if evaluation:
-                            with st.expander("📈 Evaluation"):
-                                st.json(evaluation)
+                    st.success("✅ Analisi completata dal Server!")
+                    st.json(result)
                 else:
-                    st.error(f"❌ Error: {r.text}")
+                    st.error(f"Errore del server backend: {r.text}")
             except Exception as e:
-                st.error(f"❌ Exception: {str(e)}")
+                st.error(f"Eccezione: {e}")
 
-with tab2:
-    st.header("Upload DICOM Only")
-    st.info("Upload and store DICOM file without immediate analysis.")
+# =====================================================================
+# PAGINA 3: STRUMENTI DI MANUTENZIONE
+# =====================================================================
+elif scelta_pagina == "📋 Gestione Database":
+    st.title("📋 Amministrazione e Monitoraggio Cluster")
+    st.subheader("Stato dei nodi Qdrant e file temporanei")
+    st.divider()
     
-    dicom_upload = st.file_uploader("Upload DICOM file", type=["dcm"], key="upload_dicom")
-    if st.button("📤 Upload") and dicom_upload is not None:
-        with st.spinner("Uploading..."):
-            files = {"file": (dicom_upload.name, dicom_upload.getvalue(), "application/dicom")}
-            try:
-                r = requests.post(f"{BASE_URL}/upload-doc", files=files, timeout=300)
-                if r.status_code == 200:
-                    st.success("✅ File uploaded successfully!")
-                    st.json(r.json())
-                else:
-                    st.error(f"❌ Error: {r.text}")
-            except Exception as e:
-                st.error(f"❌ Exception: {str(e)}")
-
-with tab3:
-    st.header("Manage Current Files")
-    
-    col_list, col_delete = st.columns(2)
-    
-    with col_list:
-        st.subheader("📋 List Files")
-        if st.button("🔄 Refresh File List"):
-            try:
-                r = requests.get(f"{BASE_URL}/list-docs", params={"rag_type": rag_type}, timeout=60)
-                if r.status_code == 200:
-                    files_list = r.json()
-                    if files_list:
-                        st.json(files_list)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### 🧹 Svuota Collezioni Vettoriali")
+        if st.button("🔄 Soft Reset Qdrant"):
+            with st.spinner("Resetting..."):
+                try:
+                    rr = requests.post(f"{BASE_URL}/flush-rag", timeout=60)
+                    if rr.status_code == 200:
+                        st.success("✅ Collezioni Qdrant ripulite e reinizializzate!")
                     else:
-                        st.info("No files found")
-                else:
-                    st.error(f"Error: {r.text}")
-            except Exception as e:
-                st.error(f"Exception: {str(e)}")
-    
-    with col_delete:
-        st.subheader("🗑️ Delete File")
-        file_id_to_delete = st.text_input("File ID to delete")
-        if st.button("Delete File") and file_id_to_delete:
+                        st.error(f"Errore: {rr.text}")
+                except Exception as e:
+                    st.error(f"Connessione fallita: {e}")
+                    
+    with col2:
+        st.markdown("### 📁 File Attivi nel Sistema")
+        if st.button("🔄 Mostra Lista File"):
             try:
-                r = requests.post(f"{BASE_URL}/delete-doc", json={"file_id": file_id_to_delete}, timeout=60)
+                r = requests.get(f"{BASE_URL}/list-docs", params={"rag_type": "hybrid"}, timeout=60)
                 if r.status_code == 200:
-                    st.success("✅ File deleted!")
                     st.json(r.json())
                 else:
-                    st.error(f"Error: {r.text}")
+                    st.error(f"Errore: {r.text}")
             except Exception as e:
-                st.error(f"Exception: {str(e)}")
-
-st.divider()
-
-# Actions at the bottom
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("🔄 Reset RAG Collections"):
-        with st.spinner("Resetting..."):
-            try:
-                rr = requests.post(f"{BASE_URL}/flush-rag", timeout=60)
-                if rr.status_code == 200:
-                    st.success("✅ RAG collections reset!")
-                    st.json(rr.json())
-                else:
-                    st.error(f"Error: {rr.text}")
-            except Exception as e:
-                st.error(f"Exception: {str(e)}")
-
-with col2:
-    if st.button("🗑️ Clear Session"):
-        st.session_state.messages = []
-        st.session_state.session_id = None
-        st.rerun()
+                st.error(f"Connessione fallita: {e}")

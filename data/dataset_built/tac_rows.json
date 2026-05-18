@@ -1,0 +1,37 @@
+[
+    {
+        "id": "tac_00000",
+        "image_path": "data/dataset_built/images/tac_extracted/series-00000_slice_1.png",
+        "modality": "CT",
+        "label": "Tomografia Computerizzata (Torace)",
+        "description": "Scansione TC del torace ad alta risoluzione (HRCT). Si evidenzia regolare espansione dei campi polmonari, assenza di versamento pleurico. Parenchima polmonare indenne da lesioni infiltrative a focolaio in atto."
+    },
+    {
+        "id": "tac_00001",
+        "image_path": "data/dataset_built/images/tac_extracted/series-00001_slice_133.png",
+        "modality": "CT",
+        "label": "Tomografia Computerizzata (Torace)",
+        "description": "Angio-TC del distretto toracico e della radice aortica. Calibro dell'aorta ascendente nei limiti della norma. Regolare pervietà dei principali rami arteriosi emergenti dall'arco aortico."
+    },
+    {
+        "id": "tac_00002",
+        "image_path": "data/dataset_built/images/tac_extracted/series-00002_slice_97.png",
+        "modality": "CT",
+        "label": "Tomografia Computerizzata (Torace)",
+        "description": "TC Torace di controllo. Presenza di lievi strie di disventilazione basale bilaterale. Non si osservano linfoadenomegalie di rilievo nelle stazioni mediastiniche ed ilari esaminate."
+    },
+    {
+        "id": "tac_00003",
+        "image_path": "data/dataset_built/images/tac_extracted/series-00003_slice_250.png",
+        "modality": "CT",
+        "label": "Tomografia Computerizzata (Torace)",
+        "description": "Scansione TC cardiaca di sincronizzazione. Studio della morfologia delle camere cardiache. Ventricolo sinistro nei limiti volumetrici, spessori parietali conservati in assenza di evidenti difetti di perfusione."
+    },
+    {
+        "id": "tac_00004",
+        "image_path": "data/dataset_built/images/tac_extracted/series-00004_slice_2.png",
+        "modality": "CT",
+        "label": "Tomografia Computerizzata (Torace)",
+        "description": "TC del torace con mezzo di contrasto, fase tardiva. Regolare distribuzione del contrasto nelle strutture vascolari mediastiniche. Profilo cardiaco globale omogeneo e nei limiti morfologici."
+    }
+]
