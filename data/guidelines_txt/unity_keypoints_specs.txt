@@ -1,0 +1,13 @@
+DOCUMENTAZIONE TECNICA FRAMEWORK UNITY 3D — SVILUPPO THOMAS RUSSO
+SISTEMA DI TRACCIAMENTO GEOMETRICO E ALLINEAMENTO DEI KEYPOINTS PER ECOCARDIOGRAFIA VIRTUALIZZATA
+
+L'ambiente di simulazione virtuale sviluppato in ambiente Unity consente il tracciamento in tempo reale di strutture anatomiche cardiache critiche mediante l'uso di Keypoints geometrici attivi. Il sistema monitora costantemente la stabilità della sonda virtuale e calcola l'allineamento semantico spaziale rispetto alle proiezioni standard dell'ecocardiografia clinica.
+
+1. APICE DEL VENTRICOLO SINISTRO (LV APEX)
+Il keypoint posizionato sull'Apice del Ventricolo Sinistro monitora la corretta esecuzione della vista Apicale 4 Camere (A4C). Un'instabilità geometrica nel tracciamento di questo nodo nel simulatore Unity indica una finestra acustica subottimale nella simulazione. Dal punto di vista clinico, se l'operatore non stabilizza la sonda virtuale sull'apice, la proiezione risulterà non standard. La letteratura medica internazionale associa la mancata o subottimale visualizzazione dell'apice ventricolare sinistro all'elevato rischio di mancata rilevazione (o sottostima) di ipocinesia, acinesia o discinesia apicale, tipiche delle manifestazioni precoci di Sindrome Coronarica Acuta (SCA) o Infarto Miocardico Acuto (STEMI), oltre a impedire l'esclusione di una cardiomiopatia da stress (Sindrome di Takotsubo).
+
+2. SENI DI VALSALVA E GIUNZIONE SINOTUBULARE (SOV / STJ)
+I keypoints ancorati sulla radice aortica tracciano l'allineamento semantico per la visualizzazione dei Seni di Valsalva e della Giunzione Sinotubulare nella vista Parasternale Asse Lungo (PLAX). Il corretto posizionamento di questi nodi geometrici tridimensionali è fondamentale per valutare il diametro della radice aortica. Un errore di oscillazione dei keypoints nel simulatore impedisce la corretta misurazione e l'allineamento, rendendo l'esame non diagnostico per l'esclusione di aneurismi della radice aortica o dissezioni aortiche di tipo A.
+
+3. CORRELAZIONE TRA GEOMETRIA VIRTUALIZZATA E DIAGNOSTICA REALE
+Il framework implementa un allineamento nello spazio vettoriale (Vector Store Qdrant) in cui le coordinate di errore geometrico dei keypoints di Unity vengono proiettate insieme ai vettori semantici delle linee guida cliniche. Questo consente al Large Language Model di interpretare un'instabilità tecnica nel simulatore virtuale non come un semplice bug grafico, ma come una limitazione tecnologica che compromette l'accuratezza diagnostica, simulando gli stessi vincoli acustici che un cardiologo riscontra su un paziente reale in regime di Pronto Soccorso e Triage.

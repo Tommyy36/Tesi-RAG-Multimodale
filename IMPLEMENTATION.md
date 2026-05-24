@@ -1,283 +1,51 @@
-# Sistema RAG Healthcare - Riepilogo Implementazione
+# Sistema RAG Healthcare - Riepilogo Implementazione (Thomas Refactoring)
 
-## ✅ Implementato
+## ✅ Implementato e Attivo
 
-### 1. Auto-indexing Dataset
+### 1. Ingestion & Alignment Layer
 - **Script**: `scripts/build_dataset.py`
-- **Input**: 26 file DICOM in `data/raw_data/` (14 categorie diagnostiche)
-- **Output**: 
-  - `data/dataset_built/documents.jsonl` (286 documenti)
-  - `data/dataset_built/labels.csv` (27 casi mappati → diagnosis)
-  - `data/dataset_built/images/` (260 frame PNG estratti, ~10/caso)
-- **Esecuzione**: automatica al primo avvio via `start.sh`, oppure manuale con `./rebuild_dataset.sh`
+- **Input**: File diagnostici storici (ECG originali, blocchi TAC e metadati di Unity)
+- **Output**: `data/dataset_built/documents.jsonl` (unione consolidata dei casi clinici multimodali)
+- **Esecuzione**: Automatizzata all'avvio del sistema o richiamabile manualmente.
 
-### 2. Vectorstore Manager (Singleton)
-- **File**: `src/vectorstore_manager.py`
-- **Caratteristiche**:
-  - Qdrant in-memory (configurabile per server remoto)
-  - Auto-indexing al primo utilizzo
-  - Embedding locale: SentenceTransformer all-MiniLM-L6-v2 (384 dim)
-  - Collection:
-    - `cases`: 26 case cards (metadata + features estratte)
-    - `guidelines`: chunk da 13 file guideline
-  - UUID deterministici per ID documenti
-  - Gestione errori e logging
+### 2. Moduli di Indicizzazione e Controllo Vettoriale
+- **File**: `src/vectorstore_manager.py` (Singleton Qdrant Client configurato in In-Memory Isolation Mode)
+- **Script Attivi**:
+  - `scripts/index_Qdrant.py`: Gestisce l'auto-indexing, il flush completo delle tabelle vettoriali e la riconfigurazione dello spazio metrico.
+  - `scripts/index_guidelines.py`: Script dedicato al caricamento massivo e all'indicizzazione delle linee guida internazionali (ASE/ESC) con strategia *Zero-Chunking*.
+  - `scripts/query_retrieval.py`: Utility standalone per eseguire stress-test di retrieval diretto e calcolo delle distanze del coseno fuori dal server web.
+- **Risoluzione Spazio Vettoriale**: Configurazione nativa fissa a **3072 dimensioni** adattata per l'embedding pesante di Google.
 
-### 3. Backend FastAPI
+### 3. Backend FastAPI Core
 - **File**: `api/main.py`
-- **Endpoint**:
-  - `POST /chat`: query RAG (cases, guidelines, hybrid, multimodal)
-  - `POST /upload-doc`: upload DICOM ed estrazione frame
-  - `GET /list-docs`: lista documenti caricati
-  - `POST /delete-doc`: rimuovi documento
-  - `POST /flush-rag`: reset soft del sistema
-- **CORS**: abilitato per sviluppo locale
-- **Docs**: Swagger UI su http://localhost:8000/docs
+- **Endpoint Core**:
+  - `POST /chat`: Interrogazione RAG globale cross-modale accoppiata all'algoritmo di **Clinical Reranking** per la prioritizzazione automatica dei codici rossi.
+  - `POST /analyze-case`: Endpoint principale di triage spot (Vision + Testo) dotato di pipeline di **Fault-Tolerance** per la gestione resiliente di file DICOM corrotti.
+  - `GET /list-docs`: Ispezione dei flussi e monitoraggio dei documenti attivi nel cluster.
+  - `POST /flush-rag`: Reset software istantaneo delle collezioni in memoria volatile.
 
-### 4. RAG Service
-- **File**: `api/services/rag_service.py`
-- **Funzionalità**:
-  - Retrieval semantico da vectorstore
-  - Supporto per rag_type: cases, guidelines, hybrid
-  - Ritorna answer + sources con metadata
-  - Preparato per integrazione multimodale
+### 4. RAG Service & Interfaccia Frontend
+- **File**: `api/services/rag_service.py` (Orchestratore del retrieval concorrente dalle collezioni `cases` e `guidelines` e costruttore dei prompt ibridi).
+- **File**: `frontend/app.py` (Dashboard Streamlit evoluta divisa nelle tre viste operative: Consultazione Semantica, Analisi Spot d'Urgenza e Console Admin).
 
-### 5. Script di Avvio
-- **File**: `start.sh` (eseguibile)
-- **Flusso**:
-  1. Verifica/crea ambiente virtuale
-  2. Installa dipendenze da requirements.txt
-  3. **Build dataset da DICOM** (se non esiste)
-  4. Check OPENAI_API_KEY
-  5. Inizializza vectorstore (auto-indexing)
-  6. Avvia FastAPI backend (uvicorn, hot-reload)
+---
 
-### 6. Documentazione
-- **README.md**: overview architettura + quick start
-- **QUICKSTART.md**: guida API dettagliata con esempi curl
-- **rebuild_dataset.sh**: script per rigenerare dataset
+## 📊 Dati e Contesti Indicizzati
 
-## 📊 Dati Indicizzati
+### Collezioni Vettoriali in RAM (3072 dim)
+- **Collection `cases`**: Mappatura densa dei casi clinici eterogenei (ECG, TAC e Keypoints spaziali di Unity) e delle relative annotazioni diagnostiche strutturate.
+- **Collection `guidelines`**: Caricamento integrale e non frammentato di 13 file di letteratura scientifica internazionale (sfondi teorici su cardiomiopatie, disfunzioni ventricolari, acinesie e pattern normali).
 
-### Cases (26 documenti)
-- **Normal**: 10 casi
-- **Normal with septal hypertrophy**: 1 caso
-- **Normal function mitral valve prolapse**: 1 caso
-- **Normal function septal hypertrophy athlete heart**: 1 caso
-- **Normal function septal hypertrophy in aortic stenosis**: 1 caso
-- **Normal function severe septal hypertrophy**: 1 caso
-- **Normal tendinous cord function in apical region**: 1 caso
-- **Dilated cardiomyopathy with global dysfunction**: 1 caso
-- **Global left ventricular dysfunction**: 1 caso
-- **Global left ventricular dysfunction and apical akinesia**: 1 caso
-- **Inferoapical septal akinesia**: 4 casi
-- **Left ventricular apical inferior septal aneurysm**: 1 caso
-- **Left ventricular dilatation with apical dyskinesia**: 1 caso
-- **Left ventricular dysfunction with apical akinesia and apical thrombosis**: 1 caso
+### Metadati Estratti e Sincronizzati
+- Frequenza cardiaca, numero di frame, dimensioni dei pixel e orientamento delle viste.
+- **Feature Computate**: `mean_intensity` (intensità media dei pixel), `motion_energy` (energia cinetica tra frame consecutivi del flusso binario) e `motion_std`.
 
-### Guidelines (13 file)
-- `dilated_cardiomyopathy_background.txt`
-- `global_left_ventricular_dysfunction.txt`
-- `global_left_ventricular_dysfunction_and_apical_akinesia.txt`
-- `inferoapical_akinesia_background.txt`
-- `Left_ventricular_apical_inferior_septal_aneurysm.txt`
-- `Left_ventricular_dilatation_with_apical_dyskinesia.txt`
-- `left_ventricular_dysfunction_with_apical_akinesia_and_apical_thrombosis.txt`
-- `normal_echo_background.txt`
-- `normal_function_mitral_valve_prolapse.txt`
-- `normal_function_septal_hypertrophy_athlete_heart.txt`
-- `normal_function_septal_hypertrophy_in_aortic_stenosis.txt`
-- `normal_function_severe_septal_hypertrophy.txt`
-- `normal_tendinous_cord_function_in_apical_region.txt`
+---
 
-### Metadata Estratte da DICOM
-- View, Stage, FPS, Durata effettiva, Heart rate
-- Numero frame, Dimensioni, Photometric interpretation
-- **Feature calcolate**:
-  - `mean_intensity`: intensità media normalizzata
-  - `motion_energy`: energia del movimento (diff frame consecutivi)
-  - `motion_std`: deviazione standard movimento
+## 🛠️ Tecnologie dello Stack Principale
 
-## 🚀 Come Usare
-
-### Avvio Rapido
-```bash
-export OPENAI_API_KEY="sk-..."
-./start.sh
-```
-
-### Test API
-```bash
-# Query RAG sui casi
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "What are the characteristics of dilated cardiomyopathy?",
-    "model": "gpt-4o",
-    "rag_type": "cases",
-    "evaluate": false
-  }'
-
-# Risposta include:
-# - answer: testo generato (stub)
-# - sources: array con case/guideline recuperati
-# - session_id: per conversazioni
-```
-
-### Rigenerare Dataset
-```bash
-# Se aggiungi nuovi DICOM in data/raw_data/
-./rebuild_dataset.sh
-# Poi riavvia il backend per re-indexing
-```
-
-## 🔧 Configurazione
-
-### Passare a Qdrant Remoto
-1. Avvia Qdrant server:
-   ```bash
-   docker run -d -p 6333:6333 qdrant/qdrant
-   ```
-
-2. Modifica `src/vectorstore_manager.py` riga 27:
-   ```python
-   _vectorstore = QdrantVectorstore(host="localhost", port=6333)
-   ```
-
-3. Riavvia backend
-
-### Variabili d'Ambiente
-- `OPENAI_API_KEY`: richiesta per LLM (obbligatoria)
-- `QDRANT_HOST`: host Qdrant server (default: localhost)
-- `QDRANT_PORT`: porta Qdrant (default: 6333)
-- `USE_REMOTE_QDRANT`: "true" per usare server remoto (implementabile)
-
-## 📁 Struttura Completa
-
-```
-Rag-system-4-healthcare/
-├── api/
-│   ├── main.py                         # FastAPI app (CORS, endpoints)
-│   └── services/
-│       ├── doc_service.py              # Upload DICOM, list/delete docs
-│       └── rag_service.py              # RAG query logic + retrieval
-├── app/
-│   └── streamlit_app.py                # Frontend (WIP)
-├── data/
-│   ├── raw_data/                       # DICOM originali (INPUT)
-│   │   ├── Normal/                     # 10 file .dcm
-│   │   ├── Normal_with_septal_hypertrophy/  # 1 file
-│   │   ├── dilated_cardiomyopathy_with_global_dysfunction/  # 1 file
-│   │   ├── global_left_ventricular_dysfunction/  # 1 file
-│   │   ├── global_left_ventricular_dysfunction_and_apical_akinesia/  # 1 file
-│   │   ├── inferoapical_septal_akinesia/    # 4 file
-│   │   ├── Left_ventricular_apical_inferior_septal_aneurysm/  # 1 file
-│   │   ├── Left_ventricular_dilatation_with_apical_dyskinesia/  # 1 file
-│   │   ├── left_ventricular_dysfunction_with_apical_akinesia_and_apical_thrombosis/  # 1 file
-│   │   ├── normal_function_mitral_valve_prolapse/  # 1 file
-│   │   ├── normal_function_septal_hypertrophy_athlete_heart/  # 1 file
-│   │   ├── normal_function_septal_hypertrophy_in_aortic_stenosis/  # 1 file
-│   │   ├── normal_function_severe_septal_hypertrophy/  # 1 file
-│   │   └── normal_tendinous_cord_function_in_apical_region/  # 1 file
-│   ├── dataset_built/                  # AUTO-GENERATO
-│   │   ├── documents.jsonl             # 286 documenti (26 cases + 260 frames)
-│   │   ├── labels.csv                  # Case ID → Label mapping (27 righe)
-│   │   └── images/                     # Frame estratti (~10 per caso)
-│   │       ├── <case_id_1>/
-│   │       │   ├── frame_1.png ... frame_10.png
-│   │       └── ...
-│   └── guidelines_txt/                 # Linee guida (INPUT)
-│       ├── dilated_cardiomyopathy_background.txt
-│       ├── global_left_ventricular_dysfunction.txt
-│       ├── global_left_ventricular_dysfunction_and_apical_akinesia.txt
-│       ├── inferoapical_akinesia_background.txt
-│       ├── Left_ventricular_apical_inferior_septal_aneurysm.txt
-│       ├── Left_ventricular_dilatation_with_apical_dyskinesia.txt
-│       ├── left_ventricular_dysfunction_with_apical_akinesia_and_apical_thrombosis.txt
-│       ├── normal_echo_background.txt
-│       ├── normal_function_mitral_valve_prolapse.txt
-│       ├── normal_function_septal_hypertrophy_athlete_heart.txt
-│       ├── normal_function_septal_hypertrophy_in_aortic_stenosis.txt
-│       ├── normal_function_severe_septal_hypertrophy.txt
-│       └── normal_tendinous_cord_function_in_apical_region.txt
-├── scripts/
-│   ├── build_dataset.py                # DICOM → documents.jsonl (pipeline completa)
-│   ├── dicom_to_frames_current.py      # Estrazione frame singolo caso
-│   ├── multimodal_rag_openai.py        # Pipeline RAG multimodale
-│   ├── index_Qdrant.py                 # Indexing manuale (legacy, non più usato)
-│   ├── index_guidelines.py             # Indexing manuale guidelines (legacy)
-│   ├── query_retrieval.py              # Test retrieval (legacy)
-│   └── eval_hitk_mrr.py                # Evaluation metrics (WIP)
-├── src/
-│   ├── __init__.py
-│   └── vectorstore_manager.py          # ⭐ Singleton Qdrant + auto-indexing
-├── .venv/                              # Ambiente virtuale Python
-├── requirements.txt                    # Dipendenze
-├── start.sh                            # ⭐ Script avvio completo (eseguibile)
-├── rebuild_dataset.sh                  # ⭐ Rigenera dataset (eseguibile)
-├── README.md                           # Overview progetto
-├── QUICKSTART.md                       # Guida API + esempi
-└── LICENSE
-```
-
-## 🔄 Workflow Completo
-
-```
-[DICOM files in raw_data/]
-         ↓
-    build_dataset.py
-         ↓
-    documents.jsonl (286 docs) + images/ (260 frames)
-         ↓
-    vectorstore_manager.py (auto-indexing)
-         ↓
-    Qdrant collections (26 cases + 13 guidelines)
-         ↓
-    rag_service.py (retrieval)
-         ↓
-    FastAPI /chat endpoint
-         ↓
-    [Response con answer + sources]
-```
-
-## 🎯 Prossimi Step
-
-### Priorità Alta
-- [ ] Integrare `multimodal_rag_openai.py` completamente in `rag_service.py`
-- [ ] Implementare gestione frame del caso corrente in upload-doc
-- [ ] Aggiungere chiamata effettiva a OpenAI GPT-4o (attualmente stub)
-
-### Priorità Media
-- [ ] Implementare sessioni/conversazioni con memoria
-- [ ] Aggiungere metriche evaluation (ragas)
-- [ ] Completare frontend Streamlit
-- [ ] Logging strutturato (JSON)
-
-### Priorità Bassa
-- [ ] Passare a Qdrant persistente (Docker)
-- [ ] Caching risposte
-- [ ] Rate limiting API
-- [ ] Autenticazione/autorizzazione
-
-## 🐛 Known Issues
-
-1. **Ricerca semantica casi**: attualmente recupera casi "Normal" anche per query su patologie (embedding troppo generico per metadata, serve prompt engineering o fine-tuning)
-2. **OpenAI call**: stub, non ancora integrata la chiamata vera
-3. **Session management**: non implementato (session_id ignorato)
-4. **Evaluation**: metriche non collegate
-
-## 💡 Note Tecniche
-
-- **UUID deterministici**: usiamo `uuid.uuid5` con namespace DNS per generare ID riproducibili da case_id/guideline_id
-- **DenseEmbedding**: datapizza richiede oggetti `DenseEmbedding(name, vector)`, non dict/list
-- **Chunk API**: `QdrantVectorstore.add()` accetta `Chunk` objects, non parametri separati
-- **Search results**: ritorna lista di `Chunk`, non oggetti con `.score` (score è interno)
-- **Embedding dimensioni**: 384 per all-MiniLM-L6-v2 (non 1536 di OpenAI)
-
-## 📞 Supporto
-
-Per problemi o domande:
-1. Controlla i log del backend (stdout di uvicorn)
-2. Verifica che documents.jsonl esista e non sia vuoto
-3. Testa vectorstore manualmente: `python3 src/vectorstore_manager.py`
-4. Controlla che OPENAI_API_KEY sia settata
+- **Embeddings Engine**: Google GenAI SDK - `gemini-embedding-001` (3072 dimensioni).
+- **LLM / Vision Core**: Generative Model Family (`gemini-2.5-flash` / `gemini-1.5-flash`).
+- **Vector Database**: Qdrant Client (In-Memory Isolation).
+- **Data Layer**: `pydicom` + `PIL` con cattura delle eccezioni a livello di blocco per la tolleranza ai guasti.
+- **Web Layer**: FastAPI (Porta 8000) + Streamlit (Porta 8501).

@@ -1,0 +1,16 @@
+LINEE GUIDA INTERNAZIONALI PER L'ECOCARDIOGRAFIA CLINICA E LA DIAGNOSTICA D'URGENZA
+FONTE: AMERICAN SOCIETY OF ECHOCARDIOGRAPHY (ASE) & EUROPEAN SOCIETY OF CARDIOLOGY (ESC)
+DOCUMENTO DI RIFERIMENTO PER IL FRAMEWORK DI TRIAGE MULTIMODALE
+
+1. VALUTAZIONE DELLA MOTILITÀ PARIETALE REGIONALE E SINDROME CORONARICA ACUTA (SCA / STEMI)
+Le linee guida ESC/ASE stabiliscono che l'ecocardiografia a riposo è fondamentale nella diagnostica del Pronto Soccorso per i pazienti con sospetto infarto miocardico acuto o occlusione coronarica. La presenza di alterazioni della contrattilità segmentaria (ipocinesia, acinesia o discinesia) nelle aree anatomiche specifiche permette di localizzare l'ischemia. 
+* L'acinesia apicale (apical akinesia) o l'inferoapical akinesia sono marker diretti di occlusione del ramo interventricolare anteriore della coronaria sinistra (LAD).
+* Limitazione Tecnica: Le linee guida avvertono espressamente che l'akinesia apicale può essere gravemente sottostimata o sovrastimata se le viste apicali (proiezione 4 camere, A4C) sono subottimali, instabili o non perfettamente allineate. Finestre acustiche limitate o artefatti geometrici possono mascherare anomalie funzionali sottili o transitorie, portando a esiti diagnostici falsamente negativi con conseguenze letali per il paziente.
+
+2. PROTOCOLLO DI RILEVAZIONE DEL TROMBO APICALE DEL VENTRICOLO SINISTRO
+La formazione di un trombo apicale (apical thrombosis) è una complicanza critica strettamente associata all'akinesia o discinesia dell'apice ventricolare sinistro in seguito a un infarto miocardico anteriore o in quadri di cardiomiopatia dilatativa globale (global left ventricular dysfunction).
+* Diagnostica e Limiti: L'ecocardiografia standard in modalità transtoracica (TTE) può mancare o classificare erroneamente un trombo apicale in presenza di finestre acustiche subottimali. La probabilità di omettere la rilevazione aumenta drasticamente negli stati di basso flusso o quando l'apice non è completamente visualizzato nel campo vicino.
+* Raccomandazioni Urgenti: In caso di incertezza diagnostica dovuta a scarsa qualità dell'immagine ecografica o instabilità del piano di scansione, le linee guida raccomandano l'uso immediato di Ecografia con Mezzo di Contrasto (CEUS) per delineare i margini endocardici o, in alternativa, l'integrazione di secondo livello mediante Risonanza Magnetica Cardiaca (RMC) o Tomografia Computerizzata (TC Torace/Coronaro-TC) per escludere eventi embolici sistemici.
+
+3. STRUTTURA DELLE CAMERE CARDIACHE E CARDIOMIOPATIE
+La quantificazione delle camere cardiache richiede un allineamento rigoroso per evitare il fenomeno del "foreshortening" (accorciamento dell'apice). La dilatazione del ventricolo sinistro, l'incremento dei volumi telesistolici e l'alterazione dei Seni di Valsalva o della Giunzione Sinotubulare sono indici patologici che richiedono una valutazione ecocardiografica in asse lungo (PLAX) stabile. Modificazioni transitorie guidate da stress emotivo o neuroendocrino che colpiscono selettivamente l'apice devono essere investigate per porre diagnosi differenziale con la Cardiomiopatia di Takotsubo.

@@ -1,6 +1,6 @@
 """
 Vectorstore Manager Evoluto - Integrazione Google Gemini API per Tesi Multimodale.
-Versione ULTRA COMPATIBILE - Basata sul codice funzionante dell'altra IA.
+Versione ULTRA-ROBUSTA (Thomas Russo) - Testi Integri e Coerenza Dimensionale Vettoriale.
 """
 import sys
 import os
@@ -32,9 +32,8 @@ TAC_ROWS_PATH = os.path.join(DATA_DIR, "dataset_built", "tac_rows.json")
 UNITY_ROWS_PATH = os.path.join(DATA_DIR, "dataset_built", "unity_rows.json")
 
 # --- CONFIGURAZIONE GOOGLE EMBEDDING ---
-# Ripristinato il modello esatto che funzionava e non dava 404
 EMB_MODEL_NAME = "gemini-embedding-001"
-EMBEDDING_DIM = 3072  
+EMBEDDING_DIM = 3072  # Dimensione corretta e nativa per gemini-embedding-001
 
 # I tuoi 4 ECG originali stabili
 ECG_CASES = [
@@ -51,7 +50,7 @@ _vectorstore: Optional[QdrantClient] = None
 _initialized = False
 
 def get_gemini_embeddings_batch(texts: List[str]) -> List[List[float]]:
-    """Genera embeddings usando la sintassi esatta dell'altra IA."""
+    """Genera embeddings usando la sintassi ufficiale della SDK."""
     print(f"[GeminiAPI] Generazione embedding per {len(texts)} documenti...")
     
     embeddings = []
@@ -86,21 +85,31 @@ def _ensure_collections_populated():
     _create_and_index_all()
 
 def _create_and_index_all():
-    """Configura le collezioni Qdrant con le nuove specifiche di tesi."""
+    """Configura le collezioni Qdrant assicurando la coerenza dimensionale."""
     global _vectorstore
     
+    # 1. Cancelliamo radicalmente le vecchie collezioni per svuotare la memoria dai vettori obsoleti
     for collection in ["cases", "guidelines"]:
         try:
             _vectorstore.delete_collection(collection)
-        except:
-            pass
+            print(f"[IndexQdrant] Vecchia collezione '{collection}' eliminata.")
+        except Exception as e:
+            print(f"[IndexQdrant] Info eliminazione collezione '{collection}': {e}")
+            
+        # Ricreiamo lo spazio pulito con la dimensione corretta (768)
         _vectorstore.create_collection(
             collection_name=collection,
             vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE)
         )
     
-    _pre_build_documents_jsonl()  # Esegue il merge dei file
+    # 2. Rigeneriamo il file jsonl dei casi
+    _pre_build_documents_jsonl()  
+    
+    # 3. Indicizziamo inserendo i vettori freschi generati a 768 dimensioni
+    print("[IndexQdrant] Avvio indicizzazione casi clinici...")
     _index_cases()
+    
+    print("[IndexQdrant] Avvio indicizzazione linee guida integre...")
     _index_guidelines()
 
 def _pre_build_documents_jsonl():
@@ -131,7 +140,7 @@ def _pre_build_documents_jsonl():
     print(f"[Dataset] Merge completato. {len(final_docs)} casi totali scritti in documents.jsonl")
 
 def _index_cases():
-    """Indicizza i casi clinici multimodali."""
+    """Indicizza i casi clinici multimodali a 3072 dimensioni native."""
     if not os.path.exists(JSONL_PATH):
         print(f"[IndexQdrant] ERROR: {JSONL_PATH} non trovato.")
         return
@@ -167,7 +176,7 @@ def _index_cases():
         points.append(
             PointStruct(
                 id=doc_uuid,
-                vector=embeddings[i],
+                vector=embeddings[i],  # 3072 dimensioni native
                 payload={
                     "text": docs_text[i],
                     **docs_metadata[i]
@@ -178,8 +187,9 @@ def _index_cases():
     _vectorstore.upsert(collection_name="cases", points=points)
     print(f"[IndexQdrant] ✓ Successo! Indicizzati {len(docs_text)} esami multimodali nel database.")
 
+
 def _index_guidelines():
-    """Indicizza linee guida mediche (TXT) se presenti."""
+    """Indicizza linee guida mediche intere (TXT) senza frammentazione a 3072 dimensioni."""
     if not os.path.isdir(GUIDELINES_DIR):
         print("[IndexQdrant] Nessuna linea guida TXT trovata, salto la sezione.")
         return
@@ -191,12 +201,17 @@ def _index_guidelines():
         with open(path, "r", encoding="utf-8") as f:
             text = f.read().strip()
         
-        chunks = [text[i:i+1000] for i in range(0, len(text), 800)]
-        for j, chunk in enumerate(chunks):
-            docs_text.append(chunk)
-            docs_metadata.append({"source": os.path.basename(path), "document_type": "guideline"})
+        if not text:
+            continue
+            
+        docs_text.append(text)
+        docs_metadata.append({
+            "source": os.path.basename(path), 
+            "document_type": "guideline"
+        })
     
-    if not docs_text: return
+    if not docs_text: 
+        return
     
     embeddings = get_gemini_embeddings_batch(docs_text)
     
@@ -207,7 +222,7 @@ def _index_guidelines():
         points_guidelines.append(
             PointStruct(
                 id=doc_uuid,
-                vector=embeddings[i],
+                vector=embeddings[i],  # 3072 dimensioni native
                 payload={
                     "text": docs_text[i],
                     **docs_metadata[i]
@@ -216,7 +231,7 @@ def _index_guidelines():
         )
     
     _vectorstore.upsert(collection_name="guidelines", points=points_guidelines)
-    print(f"[IndexQdrant] ✓ Indicizzate {len(docs_text)} sezioni di linee guida.")
+    print(f"[IndexQdrant] ✓ Indicizzate {len(docs_text)} linee guida integre senza frammentazione.")
 
 def reset_collections():
     """
@@ -225,12 +240,9 @@ def reset_collections():
     """
     global _vectorstore
     print("[IndexQdrant] Richiesta di reset completo ricevuta da FastAPI...")
-    # Se il client non è inizializzato, lo recuperiamo
     if _vectorstore is None:
-        from qdrant_client import QdrantClient
         _vectorstore = QdrantClient(location=":memory:")
         
-    # Chiamiamo la funzione interna che cancella e ricrea tutto da zero
     _create_and_index_all()
     print("[IndexQdrant] ✓ Reset completato con successo.")
 
