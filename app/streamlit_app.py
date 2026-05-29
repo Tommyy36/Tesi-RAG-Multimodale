@@ -14,30 +14,27 @@ load_dotenv()
 backend_host = os.getenv("BACKEND_HOST", "localhost")
 BASE_URL = f"http://{backend_host}:8000"
 
-# Configurazione della pagina in modalità Wide (schermo intero)
+# Configurazione della pagina in modalità Wide
 st.set_page_config(page_title="RAG Multimodale - Tesi Thomas", layout="wide")
 
 # Sidebar di navigazione
 with st.sidebar:
-    st.image("https://img.icons8.com/fluent/100/000000/cardiovascular.png", width=70)
-    st.title("Framework Core")
-    st.subheader("Tesi Thomas")
-    st.markdown("---")
+    
+    st.markdown("### **Multimodal RAG Framework**")
+    st.markdown("<p style='font-size: 13px; margin-top: -15px; color: #777777;'>Supporto Decisionale Clinico in Cardiologia</p>", unsafe_allow_html=True)
+    st.divider()
     
     scelta_pagina = st.radio(
         "Seleziona la Dashboard:",
-        ["🔍 Retrieval Cross-Modale", "🔬 Analisi Caso Clinico Corrente", "📋 Amministrazione Database RAG"]
+        ["Retrieval Cross-Modale", "Analisi Caso Clinico Corrente", "Amministrazione Database RAG"]
     )
-    st.markdown("---")
-    st.caption("Backend Core: FastAPI (Port 8000)")
-    st.caption("Vectorstore: Qdrant (In-Memory)")
-    st.caption("Embedding Engine: Gemini v1")
+    st.divider()
 
 # =====================================================================
 # PAGINA 1: MOTORE DI RICERCA CROSS-MODALE
 # =====================================================================
-if scelta_pagina == "🔍 Retrieval Cross-Modale":
-    st.title("🩺 Dashboard di Consultazione Medica Cross-Modale")
+if scelta_pagina == "Retrieval Cross-Modale":
+    st.title("Dashboard di Consultazione Medica Cross-Modale")
     st.subheader("Allineamento Semantico nello Spazio Vettoriale di Segnali Elettrici, Radiologici e Simulazioni 3D")
     st.info(
         "Questa sezione dimostra la novità della tesi: interrogare un database unico in linguaggio naturale "
@@ -49,7 +46,7 @@ if scelta_pagina == "🔍 Retrieval Cross-Modale":
     with st.form("form_ricerca_rag"):
         # Input di ricerca principale
         query_medico = st.text_input(
-            "✍️ Digita i sintomi, il sospetto diagnostico o il piano ecografico da cercare:",
+            "Digita i sintomi, il sospetto diagnostico o il piano ecografico da cercare:",
             placeholder="Es: Sospetto infarto acuto in corso, forte dolore retrosternale..."
         )
 
@@ -70,7 +67,7 @@ if scelta_pagina == "🔍 Retrieval Cross-Modale":
 
     # La ricerca parte solo se l'utente clicca fisicamente sul pulsante ed ha inserito del testo
     if bottone_invia and query_medico.strip():
-        with st.spinner("Invio richiesta al server FastAPI e generazione analisi..."):
+        with st.spinner("Invio richiesta al server e generazione analisi..."):
             payload_richiesta = {
                 "question": query_medico,
                 "model": "gemini",
@@ -86,12 +83,12 @@ if scelta_pagina == "🔍 Retrieval Cross-Modale":
                     risposta_clinica = data.get("answer", "")
                     sources = data.get("sources", [])
                     
-                    st.subheader("📊 Analisi Clinica Generata")
+                    st.subheader("Analisi Clinica Generata")
                     st.markdown(risposta_clinica)
                     st.divider()
                     
-                    st.subheader("📁 Reperti Estratti dallo Spazio Vettoriale")
-                    tab_esami, tab_guide = st.tabs(["🖼️ Esami Diagnostici", "📚 Letteratura Scientifica"])
+                    st.subheader("Reperti Estratti dallo Spazio Vettoriale")
+                    tab_esami, tab_guide = st.tabs(["Esami Diagnostici", "Letteratura Scientifica"])
                     
                     with tab_esami:
                         casi = [s for s in sources if s.get("type") == "cases" and s.get("metadata", {}).get("modality") in modalita][:top_k]
@@ -166,8 +163,8 @@ if scelta_pagina == "🔍 Retrieval Cross-Modale":
 # =====================================================================
 # PAGINA 2: DIAGNOSTICA SPOT MULTIMODALE (INTERFACCIA OTTIMIZZATA)
 # =====================================================================
-elif scelta_pagina == "🔬 Analisi Caso Clinico Corrente":
-    st.title("🔬 Diagnostica Integrata sul Caso Clinico Corrente")
+elif scelta_pagina == "Analisi Caso Clinico Corrente":
+    st.title("Diagnostica Integrata sul Caso Clinico Corrente")
     st.subheader("Analisi Multimodale Spot: Correlazione Immediata tra Reperto Grafico e Note del Triage")
     st.divider()
     
@@ -183,9 +180,9 @@ elif scelta_pagina == "🔬 Analisi Caso Clinico Corrente":
         key="analyze_clinical_file"
     )
     
-    report_text = st.text_area("✍️ Sintomi rilevati e Note Cliniche del Triage:", placeholder="Inserisci note sul paziente o sospetti...", height=120)
+    report_text = st.text_area("Sintomi rilevati e Note Cliniche del Triage:", placeholder="Inserisci note sul paziente o sospetti...", height=120)
     
-    if st.button("🔍 Avvia Pipeline di Analisi Concorsuale", type="primary") and file_clinico is not None:
+    if st.button("Avvia Pipeline di Analisi Concorsuale", type="primary") and file_clinico is not None:
         with st.spinner("Estrazione caratteristiche e interrogazione dello spazio vettoriale in corso..."):
             files = {"file": (file_clinico.name, file_clinico.getvalue(), "application/octet-stream")}
             data = {"report_text": report_text} if report_text.strip() else {}
@@ -206,22 +203,22 @@ elif scelta_pagina == "🔬 Analisi Caso Clinico Corrente":
                         
                     # Dettagli identificativi minimali in linea (Niente blocchi grigi asettici)
                     f_id = result.get("file_id", "Analisi Spot Istantanea")
-                    st.caption(f"🆔 **ID Unico Reperto:** `{f_id}` | ⚡ **Stato Core:** Elaborazione Multimodale Completata")
+                    st.caption(f"**ID Unico Reperto:** `{f_id}` | ⚡ **Stato Core:** Elaborazione Multimodale Completata")
                     
                     # Il report clinico prende il palcoscenico principale con layout premium
                     with st.container(border=True):
-                        st.markdown("## 📋 Report Diagnostico Integrato (Framework Core)")
+                        st.markdown("## Report Diagnostico Integrato (Framework Core)")
                         st.markdown(report_medico)
                         
                     st.markdown("<br>", unsafe_allow_html=True)
                     
                     # Expander isolato per il tracciamento dei log di debug a fondo pagina
-                    with st.expander("🛠️ Dettagli Tecnici di Acquisizione (Log Interno)"):
-                        st.write(f"📁 **Directory dei frame estratti:** `{result.get('frames_dir', 'N/A')}`")
+                    with st.expander("Dettagli Tecnici di Acquisizione (Log Interno)"):
+                        st.write(f"**Directory dei frame estratti:** `{result.get('frames_dir', 'N/A')}`")
                         if "dicom_path" in result:
-                            st.write(f"🏥 **File DICOM originale:** `{result.get('dicom_path')}`")
+                            st.write(f"**File DICOM originale:** `{result.get('dicom_path')}`")
                         frames_estratti = result.get("frames", [])
-                        st.write(f"🎞️ **Frame letti dal file binario:** `{len(frames_estratti)}`")
+                        st.write(f"**Frame letti dal file binario:** `{len(frames_estratti)}`")
                 else:
                     st.error(f"Errore del server backend: {r.text}")
             except Exception as e:
@@ -230,30 +227,30 @@ elif scelta_pagina == "🔬 Analisi Caso Clinico Corrente":
 # =====================================================================
 # PAGINA 3: STRUMENTI DI AMMINISTRAZIONE DATABASE
 # =====================================================================
-elif scelta_pagina == "📋 Amministrazione Database RAG":
-    st.title("📋 Amministrazione e Monitoraggio dell'Infrastruttura RAG")
+elif scelta_pagina == "Amministrazione Database RAG":
+    st.title("Amministrazione e Monitoraggio dell'Infrastruttura RAG")
     st.subheader("Stato dei nodi del Vector Store Qdrant e Gestione dei Documenti Indicizzati")
     st.divider()
     
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("### 🧹 Svuota Collezioni Vettoriali")
+        st.markdown("Svuota Collezioni Vettoriali")
         st.caption("Esegue il flush e la reinizializzazione completa delle collezioni su Qdrant. Utile in fase di aggiornamento delle Linee Guida.")
-        if st.button("🔄 Soft Reset Cluster Vettoriale", type="secondary", use_container_width=True):
+        if st.button("Soft Reset Cluster Vettoriale", type="secondary", use_container_width=True):
             with st.spinner("Resetting..."):
                 try:
                     rr = requests.post(f"{BASE_URL}/flush-rag", timeout=60)
                     if rr.status_code == 200:
-                        st.success("✅ Collezioni Qdrant ripulite e reinizializzate!")
+                        st.success("Collezioni Qdrant ripulite e reinizializzate!")
                     else:
                         st.error(f"Errore: {rr.text}")
                 except Exception as e:
                     st.error(f"Connessione fallita: {e}")
                     
     with col2:
-        st.markdown("### 📁 Documenti Attivi nel Sistema")
+        st.markdown("Documenti Attivi nel Sistema")
         st.caption("Visualizza l'elenco dei file di testo, linee guida o cartelle cliniche attualmente indicizzati nell'indice ibrido.")
-        if st.button("🔄 Mostra Lista File Indicizzati", type="secondary", use_container_width=True):
+        if st.button("Mostra Lista File Indicizzati", type="secondary", use_container_width=True):
             with st.spinner("Recupero documenti..."):
                 try:
                     r = requests.get(f"{BASE_URL}/list-docs", params={"rag_type": "hybrid"}, timeout=60)
